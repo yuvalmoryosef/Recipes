@@ -1,0 +1,694 @@
+openapi: 3.0.0
+info:
+  title: Simple Inventory API- for recipes site
+  description: This is a simple API
+  contact:
+    email: adiashk@post.bgu.ac.il
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.2
+servers:
+- url: https://virtserver.swaggerhub.com/adiashk/RecipeSystem/1.0.2
+  description: SwaggerHub API Auto Mocking
+tags:
+- name: Recipe
+  description: all the information about recipes general info
+- name: User
+  description: all aoutentication related to routes
+- name: Profile
+  description: all the information personal info about users
+paths:
+  /recipes/random:
+    get:
+      tags:
+      - Recipe
+      summary: returns 3 random recipes
+      responses:
+        "200":
+          description: data of 3 random recipes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/recipePreview'
+  /user/Register:
+    post:
+      tags:
+      - User
+      summary: register new user
+      description: register new user - A JSON object contain username and password
+      operationId: register
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/user'
+      responses:
+        "201":
+          description: user created
+        "409":
+          description: Username taken
+  /user/getUserInfo:
+    get:
+      tags:
+      - User
+      summary: return profile information of this user
+      description: return profile information of this user
+      responses:
+        "200":
+          description: returns the user porfile
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/user'
+        "401":
+          description: unauthorized - user did not loged in
+  /user/Login:
+    post:
+      tags:
+      - User
+      summary: login user
+      description: A JSON object contain username and password
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/userlogin'
+        required: true
+      responses:
+        "200":
+          description: saved cookie user_id after incription
+          headers:
+            Set-Cookie:
+              style: simple
+              explode: false
+              schema:
+                type: string
+                example: session=abcde12345;
+        "401":
+          description: Username or Password incorrect
+  /user/Logout:
+    post:
+      tags:
+      - User
+      summary: logout user
+      description: logout user from website
+      responses:
+        "200":
+          description: logout Successfully
+  /recipes/displayFullRecipe:
+    get:
+      tags:
+      - Recipe
+      summary: Display a recipe
+      description: Display a recipe by specipic ID
+      parameters:
+      - name: recipe_id
+        in: query
+        description: Get a recipe_id and dyspley full recipe
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/recipe'
+        "400":
+          description: incorrect input
+  /recipes/search:
+    get:
+      tags:
+      - Recipe
+      summary: search recipes by a query
+      description: search recipes by a query that get parameters
+      parameters:
+      - name: number
+        in: query
+        description: The quantity of recipes to return (5/10/15)
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: integer
+          default: 5
+          enum:
+          - 5
+          - 10
+          - 15
+        example: 15
+      - name: searchQuery
+        in: query
+        description: The recipe by his name
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+        example: couscous
+      - name: cuisine
+        in: query
+        description: The cuisine of the recipes
+        required: false
+        style: form
+        explode: true
+        schema:
+          $ref: '#/components/schemas/cuisine'
+        example:
+        - French
+      - name: diet
+        in: query
+        description: The recipes that suitable to this diet
+        required: false
+        style: form
+        explode: true
+        schema:
+          $ref: '#/components/schemas/diet'
+        example:
+        - Ketogenic
+      - name: intolerances
+        in: query
+        description: search recipes that suitable to people that not contains the
+          intolerance/s ingridient/s
+        required: false
+        style: form
+        explode: true
+        schema:
+          $ref: '#/components/schemas/intolerances'
+        example:
+        - Peanut
+      responses:
+        "200":
+          description: return an array of recipes sorted by the input query
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/recipePreview'
+        "400":
+          description: no recipes found for the search parms
+  /profile/getIsWatchedRecipe:
+    get:
+      tags:
+      - Profile
+      summary: if the user logged he gets info if he whatched the recipe by the id
+        of the recipe
+      description: if the user logged he gets info if he whatched the recipe by the
+        id of the recipe
+      parameters:
+      - name: recipe_id
+        in: query
+        description: recipe id checking
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: info if the user whatched the recipe
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "true"
+        "400":
+          description: incorrect input
+        "401":
+          description: unauthorized - user did not loged in
+      security:
+      - cookieAuth: []
+  /profile/get3WatchedRecipes:
+    get:
+      tags:
+      - Profile
+      summary: if the user logged he gets 3 recipes, the last thet he watched
+      description: if the user logged he gets 3 recipes, the last thet he watched
+      responses:
+        "200":
+          description: 3 last recipes the user whtched
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/recipePreview'
+        "401":
+          description: unauthorized - user did not loged in
+      security:
+      - cookieAuth: []
+  /profile/getAllWatchedRecipes:
+    get:
+      tags:
+      - Profile
+      summary: if the user logged he gets all the recipes he watched
+      description: if the user logged he gets all the recipes he watched
+      responses:
+        "200":
+          description: recipes the user whtched
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/recipePreview'
+        "401":
+          description: unauthorized - user did not loged in
+      security:
+      - cookieAuth: []
+  /profile/addToWatchedRecipes:
+    post:
+      tags:
+      - Profile
+      summary: add recipe to the whtched recipes of the user
+      description: add recipe to the whtched recipes of the user
+      parameters:
+      - name: recipe_id
+        in: query
+        description: add recipe by the id
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: sucessfully add recipes to user whtched
+        "400":
+          description: incorrect input
+        "401":
+          description: unauthorized - user did not loged in
+      security:
+      - cookieAuth: []
+  /profile/getIsFavoriteRecipe:
+    get:
+      tags:
+      - Profile
+      summary: if the user logged he gets info if he saved the recipe by the name
+        of the recipe
+      description: if the user logged he gets info if he saves the recipe by the name
+        of the recipe
+      parameters:
+      - name: recipe_id
+        in: query
+        description: recipe id checking
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: info if the user saves the recipe
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "true"
+        "400":
+          description: incorrect input
+        "401":
+          description: unauthorized - user did not loged in
+      security:
+      - cookieAuth: []
+  /profile/getFavoritesRecipes:
+    get:
+      tags:
+      - Profile
+      summary: get the favorites recipes of the user
+      responses:
+        "200":
+          description: returns all the recipes that the user mark as favorites in
+            preview desplay
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/recipePreview'
+        "401":
+          description: unauthorized - user did not loged in
+      security:
+      - cookieAuth: []
+  /profile/addFavoritesRecipes:
+    post:
+      tags:
+      - Profile
+      summary: add to the favorite recipes of the user
+      description: Add new recipe to the favorites recipes list of the user
+      parameters:
+      - name: recipe_id
+        in: query
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: integer
+      responses:
+        "200":
+          description: User added a favorite recipe succesfully
+        "400":
+          description: incorrect input
+        "401":
+          description: unauthorized - user did not loged in
+      security:
+      - cookieAuth: []
+  /profile/deleteFavoritesRecipes:
+    post:
+      tags:
+      - Profile
+      summary: delete from the favorite recipes of the user
+      description: delete recipe from the favorites recipes list of the user
+      parameters:
+      - name: recipe_id
+        in: query
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: integer
+      responses:
+        "200":
+          description: Recipe removed from the favorite recipes list of the user
+        "400":
+          description: incorrect input
+        "401":
+          description: unauthorized - user did not loged in
+      security:
+      - cookieAuth: []
+  /profile/getMyRecipes:
+    get:
+      tags:
+      - Profile
+      summary: Get the user's personal recipes
+      responses:
+        "200":
+          description: returns all the personal recipes of the user in preview desplay
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/recipePreview'
+        "401":
+          description: unauthorized - user did not loged in
+      security:
+      - cookieAuth: []
+  /profile/getMyFullRecipe:
+    get:
+      tags:
+      - Profile
+      summary: Get the user's personal recipe by recipe_id
+      parameters:
+      - name: recipe_name
+        in: query
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: returns the personal recipe of this recipe_id in full desplay
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/recipe'
+        "401":
+          description: unauthorized - user did not loged in
+      security:
+      - cookieAuth: []
+  /profile/getFullFamilyRecipe:
+    get:
+      tags:
+      - Profile
+      summary: Get the user's family recipe by recipe_id in full display
+      responses:
+        "200":
+          description: return family recipe of the user full desplay
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/familyRecipe'
+        "401":
+          description: unauthorized - user did not loged in
+      security:
+      - cookieAuth: []
+  /profile/getFamilyRecipes:
+    get:
+      tags:
+      - Profile
+      summary: Get the user's family preview recipe
+      responses:
+        "200":
+          description: returns all the family recipes of the user in preview desplay
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/recipePreview'
+        "401":
+          description: unauthorized - user did not loged in
+      security:
+      - cookieAuth: []
+components:
+  schemas:
+    recipePreview:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 52158
+        image:
+          type: string
+          example: cake.jpg
+        name:
+          type: string
+          example: salad
+        preperationTime:
+          type: integer
+          example: 20
+        popularity:
+          type: integer
+          example: 4
+        vegetarian:
+          type: boolean
+          example: false
+        vegan:
+          type: boolean
+          example: false
+        gluten free:
+          type: boolean
+          example: false
+    user:
+      required:
+      - confirmation
+      - country
+      - email
+      - firstname
+      - lastname
+      - password
+      - username
+      type: object
+      properties:
+        user_id:
+          uniqueItems: true
+          type: string
+          example: 1a2bf43214f56ds
+        username:
+          maxLength: 8
+          minLength: 3
+          pattern: '[A-Za-z]*'
+          uniqueItems: true
+          type: string
+          example: adidi
+        firstname:
+          pattern: '[A-Za-z]*'
+          type: string
+          example: adi
+        lastname:
+          pattern: '[A-Za-z]*'
+          type: string
+          example: ashkenazi
+        country:
+          type: string
+          example: israel
+        password:
+          maxLength: 10
+          minLength: 5
+          pattern: '[A-Za-z]*[0-9]+[A-Za-z]*[!@#\$%\^\&]+[A-Za-z]*[0-9]*'
+          type: string
+          format: password
+          example: 1a2b!
+        email:
+          type: string
+          example: aaa@gmail.com
+        image:
+          type: string
+          example: myPhoto.png
+    userlogin:
+      required:
+      - password
+      - username
+      type: object
+      properties:
+        username:
+          maxLength: 8
+          minLength: 3
+          pattern: '[A-Za-z]*'
+          uniqueItems: true
+          type: string
+          example: adi
+        password:
+          maxLength: 10
+          minLength: 5
+          pattern: '[A-Za-z]*[0-9]+[A-Za-z]*[!@#\$%\^\&]+[A-Za-z]*[0-9]*'
+          type: string
+          format: password
+          example: 1a2b!
+    recipe:
+      type: object
+      properties:
+        image:
+          type: string
+          example: cake.jpg
+        name:
+          type: string
+          example: salad
+        preperationTime:
+          type: integer
+          example: 20
+        popularity:
+          type: integer
+          example: 4
+        vegetarian:
+          type: boolean
+          example: false
+        vegan:
+          type: boolean
+          example: false
+        gluten free:
+          type: boolean
+          example: false
+        ingredients:
+          type: array
+          format: string
+          example:
+          - ingredient: flour
+            amount: 2
+          - ingredient: oil
+            amount: 1.5
+          items:
+            $ref: '#/components/schemas/ingredient'
+        instructions:
+          type: array
+          items:
+            type: string
+            example: break the eggs
+        servings:
+          type: integer
+          example: 20
+        preperation:
+          $ref: '#/components/schemas/userlogin'
+    ingredient:
+      type: object
+      properties:
+        ingredient:
+          type: string
+          example: eggs
+        amount:
+          type: number
+          format: double
+          example: 5
+    familyRecipe:
+      type: object
+      properties:
+        user_id:
+          $ref: '#/components/schemas/user/properties/user_id'
+        recipeDetails:
+          $ref: '#/components/schemas/recipe'
+        whoPrepare:
+          type: string
+          example: grandmother
+        whenPrepare:
+          type: string
+          example: in holidays
+        images:
+          type: array
+          items:
+            type: string
+            example: cake.jpg
+    cuisine:
+      type: string
+      enum:
+      - African
+      - American
+      - British
+      - Cajun
+      - Caribbean
+      - Chinese
+      - Eastern European
+      - European
+      - French
+      - German
+      - Greek
+      - Indian
+      - Irish
+      - Italian
+      - Japanese
+      - Jewish
+      - Korean
+      - Latin American
+      - Mediterranean
+      - Mexican
+      - Middle Eastern
+      - Nordic
+      - Southern
+      - Spanish
+      - Thai
+      - Vietnamese
+    diet:
+      type: string
+      enum:
+      - Gluten Free
+      - Ketogenic
+      - Vegetarian
+      - Lacto-Vegetarian
+      - Ovo-Vegetarian
+      - Vegan
+      - Pescetarian
+      - Paleo
+      - Primal
+      - Whole30
+    intolerances:
+      type: string
+      enum:
+      - Dairy
+      - Egg
+      - Gluten
+      - Grain
+      - Peanut
+      - Seafood
+      - Sesame
+      - Shellfish
+      - Soy
+      - Sulfite
+      - Tree Nut
+      - Wheat
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      name: session
+      in: cookie

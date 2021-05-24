@@ -1,0 +1,1 @@
+DELETE FROM users WHERE user_id='d4150e19-0b48-400e-b4a3-9014c95e075a'
